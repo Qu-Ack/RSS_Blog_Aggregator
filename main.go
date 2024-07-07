@@ -39,6 +39,7 @@ func main() {
 
 	mux.HandleFunc("GET /v1/healthz", readyRoute)
 	mux.HandleFunc("GET /v1/err", errorCheckRoute)
+	mux.HandleFunc("POST /v1/users", apiconfig.CreateUser)
 
 	err = server.ListenAndServe()
 	if err != nil {
