@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/Qu-Ack/RSS_Blog_Aggregator/internal/database"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -46,6 +47,7 @@ func main() {
 	mux.HandleFunc("POST /v1/feed_follows", apiconfig.middlewareAuth(apiconfig.CreateFeedFollow))
 	mux.HandleFunc("DELETE /v1/feed_follows/{FEEDFOLLOWID}", apiconfig.middlewareAuth(apiconfig.DeleteFeedFollow))
 	mux.HandleFunc("GET /v1/feed_follows", apiconfig.middlewareAuth(apiconfig.GetAllFeedFollowsRoute))
+	mux.HandleFunc("GET /v1/test", apiconfig.TestHandler)
 
 	err = server.ListenAndServe()
 	if err != nil {
@@ -54,5 +56,24 @@ func main() {
 	}
 
 	fmt.Println(fmt.Sprintf("server listening on %v ...", port))
+
+}
+
+func (cfg *apiConfig) TestHandler(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse("a4fd24e1-3d01-11ef-9571-40c2ba179fa2")
+	if err != nil {
+		respondWithError(w, 500, errorServer)
+		return
+	}
+
+	cfg.markFeedFetched(r, id)
+
+	feeds, err := cfg.getNextFeedsToFetch(r)
+	if err != nil {
+		respondWithError(w, 500, "Get Next Feeds Fetch error")
+		return
+	}
+
+	respondWithJSON(w, 200, feeds)
 
 }
