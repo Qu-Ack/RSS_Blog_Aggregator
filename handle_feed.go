@@ -10,46 +10,56 @@ import (
 	"github.com/google/uuid"
 )
 
-func (ap *apiConfig) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) CreateFeedRoute(w http.ResponseWriter, r *http.Request, user database.User) {
 	type bodyParams struct {
 		Name string `json:"name"`
+		Url  string `json:"url"`
 	}
 
 	body, err := io.ReadAll(r.Body)
 
 	if err != nil {
 		respondWithError(w, 500, errorServer)
+		return
+
 	}
 
 	params := bodyParams{}
-
 	err = json.Unmarshal(body, &params)
 
 	if err != nil {
 		respondWithError(w, 500, errorServer)
+		return
 	}
 
-	server_id, err := uuid.NewUUID()
+	feed_id, err := uuid.NewUUID()
 	if err != nil {
 		respondWithError(w, 500, errorServer)
 	}
 
-	User, err := ap.DB.CreateUser(r.Context(), database.CreateUserParams{
-		ID:        server_id,
+	Feed, err := cfg.DB.CreateFeed(r.Context(), database.CreateFeedParams{
+		ID:        feed_id,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Name:      params.Name,
+		Url:       params.Url,
+		UserID:    user.ID,
 	})
 
 	if err != nil {
 		respondWithError(w, 500, errorServer)
+		return
 	}
 
-	respondWithJSON(w, 201, User)
-
+	respondWithJSON(w, 201, Feed)
 }
 
-func (ap *apiConfig) GetUserByAPIKEY(w http.ResponseWriter, r *http.Request, user database.User) {
-	respondWithJSON(w, 200, user)
+func (cfg *apiConfig) GetAllFeeds(w http.ResponseWriter, r *http.Request) {
+	feeds, err := cfg.DB.GetAllFeeds(r.Context())
+	if err != nil {
+		respondWithError(w, 500, errorServer)
+		return
+	}
 
+	respondWithJSON(w, 200, feeds)
 }

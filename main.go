@@ -40,6 +40,9 @@ func main() {
 	mux.HandleFunc("GET /v1/healthz", readyRoute)
 	mux.HandleFunc("GET /v1/err", errorCheckRoute)
 	mux.HandleFunc("POST /v1/users", apiconfig.CreateUser)
+	mux.HandleFunc("GET /v1/users", apiconfig.middlewareAuth(apiconfig.GetUserByAPIKEY))
+	mux.HandleFunc("POST /v1/feeds", apiconfig.middlewareAuth(apiconfig.CreateFeedRoute))
+	mux.HandleFunc("GET /v1/feeds", apiconfig.GetAllFeeds)
 
 	err = server.ListenAndServe()
 	if err != nil {
