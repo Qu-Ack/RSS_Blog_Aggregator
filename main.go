@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/Qu-Ack/RSS_Blog_Aggregator/internal/database"
-	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -49,6 +48,8 @@ func main() {
 	mux.HandleFunc("GET /v1/feed_follows", apiconfig.middlewareAuth(apiconfig.GetAllFeedFollowsRoute))
 	mux.HandleFunc("GET /v1/test", apiconfig.TestHandler)
 
+	go apiconfig.scraper()
+
 	err = server.ListenAndServe()
 	if err != nil {
 		fmt.Println("An Error Occured")
@@ -60,20 +61,11 @@ func main() {
 }
 
 func (cfg *apiConfig) TestHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := uuid.Parse("a4fd24e1-3d01-11ef-9571-40c2ba179fa2")
+	xml_data, err := fetchXMLfromFEED("https://blog.boot.dev/index.xml")
 	if err != nil {
-		respondWithError(w, 500, errorServer)
+		respondWithError(w, 500, err.Error())
 		return
 	}
 
-	cfg.markFeedFetched(r, id)
-
-	feeds, err := cfg.getNextFeedsToFetch(r)
-	if err != nil {
-		respondWithError(w, 500, "Get Next Feeds Fetch error")
-		return
-	}
-
-	respondWithJSON(w, 200, feeds)
-
+	respondWithJSON(w, 200, xml_data)
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"io"
@@ -125,8 +126,8 @@ func databaseFeedToFeed(FeedParam database.Feed) Feed {
 	return newFeed
 }
 
-func (cfg *apiConfig) getNextFeedsToFetch(r *http.Request) ([]Feed, error) {
-	feeds, err := cfg.DB.GetFieldsFetechedAtDesc(r.Context())
+func (cfg *apiConfig) getNextFeedsToFetch(r context.Context) ([]Feed, error) {
+	feeds, err := cfg.DB.GetFieldsFetechedAtDesc(r)
 	if err != nil {
 		return nil, err
 	}
@@ -140,13 +141,13 @@ func (cfg *apiConfig) getNextFeedsToFetch(r *http.Request) ([]Feed, error) {
 	return newFeeds, nil
 }
 
-func (cfg *apiConfig) markFeedFetched(r *http.Request, id uuid.UUID) {
+func (cfg *apiConfig) markFeedFetched(r context.Context, id uuid.UUID) {
 	currentTime := sql.NullTime{
 		Time:  time.Now(),
 		Valid: true,
 	}
 
-	cfg.DB.UpdateFetchedAt(r.Context(), database.UpdateFetchedAtParams{
+	cfg.DB.UpdateFetchedAt(r, database.UpdateFetchedAtParams{
 		LastFetchedAt: currentTime,
 		UpdatedAt:     time.Now(),
 		ID:            id,
