@@ -43,6 +43,9 @@ func main() {
 	mux.HandleFunc("GET /v1/users", apiconfig.middlewareAuth(apiconfig.GetUserByAPIKEY))
 	mux.HandleFunc("POST /v1/feeds", apiconfig.middlewareAuth(apiconfig.CreateFeedRoute))
 	mux.HandleFunc("GET /v1/feeds", apiconfig.GetAllFeeds)
+	mux.HandleFunc("POST /v1/feed_follows", apiconfig.middlewareAuth(apiconfig.CreateFeedFollow))
+	mux.HandleFunc("DELETE /v1/feed_follows/{FEEDFOLLOWID}", apiconfig.middlewareAuth(apiconfig.DeleteFeedFollow))
+	mux.HandleFunc("GET /v1/feed_follows", apiconfig.middlewareAuth(apiconfig.GetAllFeedFollowsRoute))
 
 	err = server.ListenAndServe()
 	if err != nil {

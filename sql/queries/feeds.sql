@@ -6,3 +6,6 @@ RETURNING *;
 
 -- name: GetAllFeeds :many
 SELECT * FROM feeds;
+
+-- name: GetFieldByID :one
+SELECT * FROM feeds where id=$1;

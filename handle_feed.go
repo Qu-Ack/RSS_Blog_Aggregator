@@ -16,6 +16,11 @@ func (cfg *apiConfig) CreateFeedRoute(w http.ResponseWriter, r *http.Request, us
 		Url  string `json:"url"`
 	}
 
+	type response struct {
+		feed        database.Feed
+		feed_follow database.Feedfollow
+	}
+
 	body, err := io.ReadAll(r.Body)
 
 	if err != nil {
@@ -36,6 +41,11 @@ func (cfg *apiConfig) CreateFeedRoute(w http.ResponseWriter, r *http.Request, us
 	if err != nil {
 		respondWithError(w, 500, errorServer)
 	}
+	feed_follow_id, err := uuid.NewUUID()
+
+	if err != nil {
+		respondWithError(w, 500, errorServer)
+	}
 
 	Feed, err := cfg.DB.CreateFeed(r.Context(), database.CreateFeedParams{
 		ID:        feed_id,
@@ -51,7 +61,23 @@ func (cfg *apiConfig) CreateFeedRoute(w http.ResponseWriter, r *http.Request, us
 		return
 	}
 
-	respondWithJSON(w, 201, Feed)
+	FeedFollow, err := cfg.DB.CreateFeedFollow(r.Context(), database.CreateFeedFollowParams{
+		ID:        feed_follow_id,
+		FeedID:    Feed.ID,
+		UserID:    user.ID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	})
+
+	if err != nil {
+		respondWithError(w, 500, errorServer)
+		return
+	}
+
+	respondWithJSON(w, 201, map[string]any{
+		"feed":        Feed,
+		"feed_follow": FeedFollow,
+	})
 }
 
 func (cfg *apiConfig) GetAllFeeds(w http.ResponseWriter, r *http.Request) {
