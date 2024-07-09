@@ -2,12 +2,17 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/xml"
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
+
+	"github.com/Qu-Ack/RSS_Blog_Aggregator/internal/database"
+	"github.com/google/uuid"
 )
 
 type Rss struct {
@@ -84,7 +89,53 @@ func (cfg apiConfig) scraper() {
 				cfg.markFeedFetched(context.Background(), feed.ID)
 
 				for _, item := range xml_data.Channel.Item {
-					log.Println(item.Title)
+					uuid, err := uuid.NewUUID()
+
+					if err != nil {
+						log.Println("Cound't gen UUID")
+						continue
+					}
+
+					layouts := []string{
+						time.RFC1123,                // "Mon, 02 Jan 2006 15:04:05 MST"
+						time.RFC1123Z,               // "Mon, 02 Jan 2006 15:04:05 -0700"
+						"2006-01-02T15:04:05-07:00", // "2024-07-09T10:25:01+05:30"
+					}
+					ft := time.Time{}
+
+					for _, layout := range layouts {
+						t, err := time.Parse(layout, item.PubDate)
+						if err == nil {
+							ft = t
+							break
+						}
+					}
+
+					publishedAt := sql.NullTime{
+						Time:  ft,
+						Valid: true,
+					}
+
+					_, perr := cfg.DB.CreatePost(context.Background(), database.CreatePostParams{
+						ID:          uuid,
+						CreatedAt:   time.Now(),
+						UpdatedAt:   time.Now(),
+						Title:       item.Title,
+						Description: item.Description,
+						Url:         item.Link,
+						PublishedAt: publishedAt,
+						FeedID:      feed.ID,
+					})
+
+					if perr != nil {
+						if strings.Contains(perr.Error(), "duplicate key value violates unique constraint") {
+							continue
+						}
+
+						log.Printf("couldn't creat post :%v", err)
+						continue
+					}
+
 				}
 
 				log.Printf("Feed %s collected, %v posts found", feed.Name, len(xml_data.Channel.Item))

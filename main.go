@@ -47,6 +47,7 @@ func main() {
 	mux.HandleFunc("DELETE /v1/feed_follows/{FEEDFOLLOWID}", apiconfig.middlewareAuth(apiconfig.DeleteFeedFollow))
 	mux.HandleFunc("GET /v1/feed_follows", apiconfig.middlewareAuth(apiconfig.GetAllFeedFollowsRoute))
 	mux.HandleFunc("GET /v1/test", apiconfig.TestHandler)
+	mux.HandleFunc("GET /v1/posts", apiconfig.middlewareAuth(apiconfig.GetPostByUser))
 
 	go apiconfig.scraper()
 
